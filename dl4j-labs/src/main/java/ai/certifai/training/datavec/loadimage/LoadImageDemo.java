@@ -18,11 +18,22 @@
 package ai.certifai.training.datavec.loadimage;
 
 import ai.certifai.Helper;
+import com.sun.scenario.effect.Crop;
 import org.apache.commons.io.FileUtils;
+import org.datavec.api.io.filters.RandomPathFilter;
 import org.datavec.api.io.labels.ParentPathLabelGenerator;
+import org.datavec.api.split.FileSplit;
+import org.datavec.api.split.InputSplit;
 import org.datavec.image.loader.BaseImageLoader;
+import org.datavec.image.recordreader.ImageRecordReader;
+import org.datavec.image.transform.*;
+import org.deeplearning4j.datasets.datavec.RecordReaderDataSetIterator;
+import org.jfree.data.general.Dataset;
+import org.nd4j.linalg.dataset.DataSet;
+import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.dataset.api.preprocessor.DataNormalization;
 import org.nd4j.linalg.dataset.api.preprocessor.ImagePreProcessingScaler;
+import org.nd4j.linalg.primitives.Pair;
 import org.nd4j.util.ArchiveUtils;
 import org.slf4j.Logger;
 
@@ -30,6 +41,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 public class LoadImageDemo {
@@ -54,6 +67,8 @@ public class LoadImageDemo {
         downloadLink= Helper.getPropValues("dataset.plant.seed.url");;
         dataDir= Paths.get(System.getProperty("user.home"),Helper.getPropValues("dl4j_home.data")).toString();
 
+        //File myFile = new ClassPathResource();
+
         File parentDir = new File(Paths.get(dataDir,"plant-seedlings-classification","train").toString());
         if(!parentDir.exists()) downloadAndUnzip();
 
@@ -69,39 +84,56 @@ public class LoadImageDemo {
          */
 
         //create FileSplit point to images parent folder
-        /*
-        YOUR CODE HERE
-         */
+        FileSplit fileSplit = new FileSplit(parentDir);
 
         //create random path filter using RandomPathFilter
-        /*
-        YOUR CODE HERE
-         */
+        RandomPathFilter RPF = new RandomPathFilter(randNumGen, allowedExtensions);
 
         //split images into training and test dataset using FileSplit.sample
-        /*
-        YOUR CODE HERE
-         */
+        InputSplit[] filesinDirSplit = fileSplit.sample(RPF, 70, 30);
+        InputSplit trainData = filesinDirSplit[0];
+        InputSplit testData = filesinDirSplit[1];
 
         //read image using ImageRecordReader
-        /*
-        YOUR CODE HERE
-         */
+        ImageRecordReader trainRR = new ImageRecordReader(height, width, channels, labelMaker);
+        ImageRecordReader testRR = new ImageRecordReader(height, width, channels, labelMaker);
 
-        //define and initialize image transformation
-        /*
-        YOUR CODE HERE
-         */
+        FlipImageTransform horizontalFlip = new FlipImageTransform(1);
+        ImageTransform cropImage = new CropImageTransform(5);
+        ImageTransform rotateImage = new RotateImageTransform(randNumGen, 15);
+        ImageTransform showImage = new ShowImageTransform("Image", 1000);
+        boolean shuffle = false;
+        List<Pair<ImageTransform, Double>> pipeline = Arrays.asList(
+                new Pair<>(horizontalFlip, 0.5),
+                new Pair<>(cropImage, 0.5),
+                new Pair<>(rotateImage, 0.5),
+                new Pair<>(showImage, 1.0)
+        );
+        ImageTransform transform = new PipelineImageTransform(pipeline,shuffle);
 
         //create dataset iterator
-        /*
-        YOUR CODE HERE
-         */
+        trainRR.initialize(trainData, transform);
+        testRR.initialize(testData);
+
+        DataSetIterator trainIter = new RecordReaderDataSetIterator(trainRR, batchSize, 1, numLabels);
+        DataSetIterator testIter = new RecordReaderDataSetIterator(testRR, batchSize, 1, numLabels);
 
         //set image data normalization
-        /*
-        YOUR CODE HERE
-         */
+        trainIter.setPreProcessor(scaler);
+        testIter.setPreProcessor(scaler);
+
+        System.out.println(trainIter.next());
+
+        int batchIndex = 0;
+        while(trainIter.hasNext())
+        {
+            DataSet ds = trainIter.next();
+
+            batchIndex += 1;
+            System.out.println("\nBatch number: " + batchIndex);
+            System.out.println("Feature vector shape: " + Arrays.toString(ds.getFeatures().shape()));
+            System.out.println("Label vector shape: " +Arrays.toString(ds.getLabels().shape()));
+        }
 
     }
 

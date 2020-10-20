@@ -17,6 +17,33 @@
 
 package ai.certifai.training.regression.bostonhousepriceprediction;
 
+import ai.certifai.solution.feedforward.detectgender.GenderRecordReader;
+import org.datavec.api.records.reader.impl.collection.CollectionRecordReader;
+import org.datavec.api.records.reader.impl.csv.CSVRecordReader;
+import org.datavec.api.split.FileSplit;
+import org.datavec.api.transform.TransformProcess;
+import org.datavec.api.transform.schema.Schema;
+import org.datavec.api.writable.Writable;
+import org.datavec.local.transforms.LocalTransformExecutor;
+import org.deeplearning4j.datasets.datavec.RecordReaderDataSetIterator;
+import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
+import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
+import org.deeplearning4j.nn.conf.layers.DenseLayer;
+import org.deeplearning4j.nn.conf.layers.OutputLayer;
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.deeplearning4j.nn.weights.WeightInit;
+import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
+import org.nd4j.evaluation.regression.RegressionEvaluation;
+import org.nd4j.linalg.activations.Activation;
+import org.nd4j.linalg.dataset.SplitTestAndTrain;
+import org.nd4j.linalg.dataset.ViewIterator;
+import org.nd4j.linalg.dataset.DataSet;
+import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
+import org.nd4j.linalg.io.ClassPathResource;
+import org.nd4j.linalg.learning.config.Adam;
+import org.nd4j.linalg.learning.config.Nesterovs;
+import org.nd4j.linalg.lossfunctions.LossFunctions;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -64,38 +91,43 @@ public class BostonHousePricePrediction {
          * */
 
 //       //  Preparing the data
-//        File dataFile = new ClassPathResource("boston/bostonHousing.csv").getFile();
+        File dataFile = new ClassPathResource("boston/bostonHousing.csv").getFile();
 //        /*
 //         *      Use record reader and file split for data loading
 //         *      Approximate around 2 lines of codes
 //         * */
 //
 ////        Uncomment this to view the data
-////        while(recordReader.hasNext()){
-////            System.out.println(recordReader.next());
-////        }
-////        recordReader.reset();
+        CSVRecordReader recordReader = new CSVRecordReader();
+        recordReader.initialize(new FileSplit(dataFile));
+
+        while(recordReader.hasNext()){
+            System.out.println(recordReader.next());
+        }
+        recordReader.reset();
 //
 //        // Declaring the feature names in schema
-//        Schema inputDataSchema =new Schema.Builder()
-//                /*
-//                 *
-//                 * ENTER YOUR CODE HERE
-//                 *
-//                 * */
-//                .build();
+        Schema inputDataSchema =new Schema.Builder()
+                .addColumnsDouble("CRIM","ZN","INDUS")
+                .addColumnInteger("CHAS")
+                .addColumnsDouble("NOX","RM","AGE","DIS")
+                .addColumnInteger("RAD")
+                .addColumnsDouble("TAX","PTRATIO","B","LSTAT","MEDV")
+                .build();
 //
-//        TransformProcess tp = new TransformProcess.Builder(inputDataSchema)
-//                .build();
+        TransformProcess tp = new TransformProcess.Builder(inputDataSchema)
+                .build();
 //
 //        //  adding the original data to a list for later transform purpose
-//        List<List<Writable>> originalData = new ArrayList<>();
-//        while(recordReader.hasNext()){
-//            List<Writable> data = CSVreader.next();
-//            originalData.add(data);
-//        }
+        List<List<Writable>> originalData = new ArrayList<>();
+        while(recordReader.hasNext()){
+            List<Writable> data = recordReader.next();
+            originalData.add(data);
+        }
 //
-//        List<List<Writable>> transformedData = LocalTransformExecutor.execute(originalData,tp);
+        List<List<Writable>> transformedData = LocalTransformExecutor.execute(originalData,tp);
+        System.out.println(tp.getInitialSchema());
+        System.out.println(tp.getFinalSchema());
 //
 //        //  Printing out the transformed data
 //        for (int i = 0; i< transformedData.size();i++){
@@ -103,44 +135,62 @@ public class BostonHousePricePrediction {
 //        }
 //
 //        //  Preparing to split the dataset into training and test set
-//        CollectionRecordReader crr = new CollectionRecordReader(transformedData);
-//        DataSetIterator dataIter = new RecordReaderDataSetIterator(//YOUR CODE HERE);
+        CollectionRecordReader crr = new CollectionRecordReader(transformedData);
+        DataSetIterator dataIter = new RecordReaderDataSetIterator(crr, transformedData.size(), 13, 13, true);
 //
-//        DataSet allData = dataIter.next();
-//        allData.shuffle();
+        DataSet allData = dataIter.next();
+        allData.shuffle();
 //
-//        SplitTestAndTrain testTrainSplit = // YOUR CODE HERE;
+        SplitTestAndTrain testTrainSplit = allData.splitTestAndTrain(0.7);
 //
-//        DataSet trainingSet = // YOUR CODE HERE;
-//        DataSet testSet = // YOUR CODE HERE;
+        DataSet trainingSet = testTrainSplit.getTrain();
+        DataSet testSet = testTrainSplit.getTest();
 //
 //        //  Assigning dataset iterator for training purpose
-//        ViewIterator trainIter = new ViewIterator(trainingSet, batchSize);
-//        ViewIterator testIter = new ViewIterator(testSet, batchSize);
+        ViewIterator trainIter = new ViewIterator(trainingSet, batchSize);
+        ViewIterator testIter = new ViewIterator(testSet, batchSize);
 //
 //        //  Configuring the structure of the NN
-//        MultiLayerConfiguration conf= new NeuralNetConfiguration.Builder()
-//                /*
-//                 *
-//                 * ENTER YOUR CODE HERE
-//                 *
-//                 * */
+        MultiLayerConfiguration conf= new NeuralNetConfiguration.Builder()
+                .seed(seed)
+                .weightInit(WeightInit.XAVIER)
+                .updater(new Adam(learningRate))
+                .list()
+                .layer(new DenseLayer.Builder()
+                        .nIn(13)
+                        .nOut(50)
+                        .activation(Activation.TANH)
+                        .build())
+                .layer(new DenseLayer.Builder()
+                        .nIn(50)
+                        .nOut(30)
+                        .activation(Activation.TANH)
+                        .build())
+                .layer(new OutputLayer.Builder()
+                        .nIn(30)
+                        .nOut(1)
+                        .activation(Activation.IDENTITY)
+                        .lossFunction(LossFunctions.LossFunction.MSE)
+                        .build())
+                .build();
 //
 //
-//        MultiLayerNetwork model = new MultiLayerNetwork(conf);
-//        model.init();
-//        model.setListeners(new ScoreIterationListener(100));
+        MultiLayerNetwork model = new MultiLayerNetwork(conf);
+        model.init();
+        model.setListeners(new ScoreIterationListener(100));
 //
 //        //  Fitting the model for nEpochs
-//        for(int i =0; i<nEpochs;i++){
-//            if(i%1000==0){
-//                System.out.println("Epoch: " + i);
-//            }
-//            model.fit(trainIter);
-//        }
+        for(int i =0; i<nEpochs;i++){
+            if(i%1000==0){
+                System.out.println("Epoch: " + i);
+            }
+            model.fit(trainIter);
+        }
 //
 //        //  Evaluating the outcome of our trained model
-//        RegressionEvaluation regEval= // YOUR CODE HERE;
-//        System.out.println(regEval.stats());
+        RegressionEvaluation regEvalTrain = model.evaluateRegression(trainIter);
+        RegressionEvaluation regEvalTest= model.evaluateRegression(testIter);
+        System.out.println("This is my train evaluation" + regEvalTrain.stats());
+        System.out.println("This is my test evaluation" + regEvalTest.stats());
     }
 }

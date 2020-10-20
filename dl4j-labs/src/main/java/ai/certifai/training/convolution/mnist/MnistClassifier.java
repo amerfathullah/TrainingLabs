@@ -39,17 +39,17 @@ import org.deeplearning4j.nn.conf.BackpropType;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.inputs.InputType;
-import org.deeplearning4j.nn.conf.layers.ConvolutionLayer;
-import org.deeplearning4j.nn.conf.layers.DenseLayer;
-import org.deeplearning4j.nn.conf.layers.OutputLayer;
-import org.deeplearning4j.nn.conf.layers.SubsamplingLayer;
+import org.deeplearning4j.nn.conf.layers.*;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
+import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.evaluation.classification.Evaluation;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
+import org.nd4j.linalg.dataset.api.preprocessor.NormalizerMinMaxScaler;
+import org.nd4j.linalg.learning.config.Adam;
 import org.nd4j.linalg.learning.config.Nesterovs;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 import org.slf4j.Logger;
@@ -57,6 +57,7 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -79,7 +80,7 @@ public class MnistClassifier extends Application {
     private static final int width = 28;
     private static final int channels = 1; // single channel for grayscale images
     private static final int outputNum = 10; // 10 digits classification
-    private static final int batchSize = 54;
+    private static final int batchSize = 64;
     private static final int nEpochs = 1;
     private static final double learningRate = 0.001;
     private static MultiLayerNetwork model = null;
@@ -104,24 +105,45 @@ public class MnistClassifier extends Application {
 
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .seed(seed)
-                .updater(new Nesterovs(learningRate, Nesterovs.DEFAULT_NESTEROV_MOMENTUM))
+                .updater(new Adam(learningRate))
                 .weightInit(WeightInit.XAVIER)
+                .l2(0.0001)
                 .list()
-                .layer(0, new ConvolutionLayer.Builder(5, 5)
-                        .nIn(channels)
+                .layer(0, new ConvolutionLayer.Builder()
+                        .nIn(1)
+                        .nOut(32)
+                        .kernelSize(3, 3)
                         .stride(1, 1)
-                        .nOut(20)
-                        .activation(Activation.IDENTITY)
+                        .activation(Activation.RELU)
                         .build())
-                .layer(1, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+                .layer(1, new ConvolutionLayer.Builder()
+                        .nIn(32)
+                        .nOut(64)
+                        .stride(2, 2)
+                        .kernelSize(5, 5)
+                        .activation(Activation.RELU)
+                        .build())
+                .layer(2, new SubsamplingLayer.Builder()
                         .kernelSize(2, 2)
                         .stride(2, 2)
+                        .poolingType(SubsamplingLayer.PoolingType.MAX)
                         .build())
-                .layer(2, new DenseLayer.Builder().activation(Activation.RELU)
-                        .nOut(50).build())
-                .layer(3, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
+                .layer(3, new ConvolutionLayer.Builder()
+                        .nIn(64)
                         .nOut(outputNum)
+                        .stride(1, 1)
+                        .kernelSize(3, 3)
+                        .activation(Activation.RELU)
+                        .build())
+                .layer(4, new DenseLayer.Builder()
+                        .nOut(100)
+                        .activation(Activation.TANH)
+                        .build())
+                .layer(5, new OutputLayer.Builder()
                         .activation(Activation.SOFTMAX)
+                        .lossFunction(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
+                        .nIn(100)
+                        .nOut(outputNum)
                         .build())
                 .setInputType(InputType.convolutionalFlat(height, width, 1)) // InputType.convolutional for normal image
                 .backpropType(BackpropType.Standard)
@@ -129,6 +151,15 @@ public class MnistClassifier extends Application {
 
         model = new MultiLayerNetwork(conf);
         model.init();
+
+        System.out.println(model.summary());
+
+        NormalizerMinMaxScaler scaler = new NormalizerMinMaxScaler();
+        scaler.fit(mnistTrain);
+
+        mnistTrain.setPreProcessor(scaler);
+        mnistTest.setPreProcessor(scaler);
+
         model.setListeners(new ScoreIterationListener(10));
 
         // evaluation while training (the score should go down)
@@ -141,6 +172,13 @@ public class MnistClassifier extends Application {
             mnistTrain.reset();
             mnistTest.reset();
         }
+
+        //LocationToSave model
+        File LocationToSave = new File(System.getProperty("java.io.tmpdir"), "/trained_model.zip");
+
+        System.out.println(LocationToSave.toString());
+        //Save your model
+        ModelSerializer.writeModel(model, LocationToSave, false);
 
     /*
    #### LAB STEP 2 #####

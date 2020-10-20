@@ -67,5 +67,14 @@ public class Ex6_TransformOperations {
         - Perform round operation on arr1
         */
 
+        System.out.println(BLUE_BOLD + "Exercise" + ANSI_RESET);
+
+        INDArray arr1 = Nd4j.rand(3,3);
+        System.out.println(arr1);
+        INDArray tanHArray = Transforms.tanh(arr1);
+        System.out.println(tanHArray);
+        INDArray round = Transforms.round(arr1);
+        System.out.println(round);
+
     }
 }

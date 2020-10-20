@@ -35,7 +35,7 @@ public class Ex3_SortReshapeAndConcatenation {
         System.out.println(BLACK_BOLD + "Default array" + ANSI_RESET);
         System.out.println(myArray);
 
-        //Sorting
+        //Sorting  50 - 320
         INDArray sortedArrayVertical = Nd4j.sort(myArray.dup(),0,true);
         System.out.println(BLACK_BOLD + "\nSort at dimension 0 and ascending" + ANSI_RESET);
         System.out.println(BLUE_BOLD + "Nd4j.sort(myArray,0,true)" + ANSI_RESET);
@@ -103,6 +103,13 @@ public class Ex3_SortReshapeAndConcatenation {
         - Concatenate array2 to array1 (use reshape, flatten, or transpose if needed)
         - Sort(descending) the concatenated array in dimension 1
         */
-
+        System.out.println(BLUE_BOLD + "Exercise................." + ANSI_RESET);
+        INDArray arr1 = Nd4j.rand(2,3).transpose();
+        INDArray arr2= Nd4j.rand(5,2);
+        INDArray concatenated3 = Nd4j.concat(0,arr2, arr1);
+        System.out.println(concatenated3);
+        INDArray sortDesc = Nd4j.sort(concatenated3,1,false);
+        System.out.println(BLUE_BOLD + "Sort Desc." + ANSI_RESET);
+        System.out.println(sortDesc);
     }
 }

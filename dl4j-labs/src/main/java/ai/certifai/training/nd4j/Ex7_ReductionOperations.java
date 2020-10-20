@@ -76,6 +76,10 @@ public class Ex7_ReductionOperations {
         - Get min value from the arr1 along dimension 0
         - Get max value from the arr1
         */
+        INDArray arr1 = Nd4j.rand(3,3);
+        System.out.println(arr1);
+        System.out.println(arr1.min(0));
+        System.out.println(arr1.max());
 
     }
 }

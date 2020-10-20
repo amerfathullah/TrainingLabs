@@ -17,7 +17,14 @@
 
 package ai.certifai.training.image_processing;
 
+import org.bytedeco.opencv.opencv_core.Mat;
+import org.bytedeco.opencv.opencv_core.Size;
+import org.nd4j.linalg.io.ClassPathResource;
+
 import java.io.IOException;
+
+import static org.bytedeco.opencv.global.opencv_imgcodecs.*;
+import static org.bytedeco.opencv.global.opencv_imgproc.*;
 
 /*
  * Using code from LoadImages.java, read an image from the resources folder, and apply:
@@ -33,11 +40,17 @@ import java.io.IOException;
 public class ImageBlur {
     public static void main(String[] args) throws IOException {
 
-    /*
-    *
-    * ENTER YOUR CODE HERE
-    *
-    * */
+        Mat src = imread(new ClassPathResource("image_processing/lena.png").getFile().getAbsolutePath());
 
+        Display.display(src, "Original");
+
+        Mat dest_gauss = new Mat();
+        Mat dest_median = new Mat();
+
+        GaussianBlur(src, dest_gauss, new Size(3,3), 2);
+        medianBlur(src, dest_median, 3);
+
+        Display.display(dest_gauss, "Gaussian Blur");
+        Display.display(dest_median, "Median Blur");
     }
 }

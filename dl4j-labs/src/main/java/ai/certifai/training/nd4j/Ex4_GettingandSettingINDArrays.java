@@ -42,7 +42,7 @@ public class Ex4_GettingandSettingINDArrays {
         System.out.println(scalarVal);
 
         //Set scalar value
-        myArray.putScalar(6,0);
+        myArray.putScalar(9,0);
         System.out.println(BLACK_BOLD + "\nSet scalar value by index, set value of index 6 to 0" + ANSI_RESET);
         System.out.println(BLUE_BOLD + "myArray.getScalar(6,0)" + ANSI_RESET);
         System.out.println(myArray);
@@ -94,6 +94,7 @@ public class Ex4_GettingandSettingINDArrays {
         System.out.println(BLUE_BOLD + "myArray.put(new INDArrayIndex[]{NDArrayIndex.point(0),NDArrayIndex.all()},Nd4j.zeros(1,5));" + ANSI_RESET);
         System.out.println(myArray);
 
+        System.out.println(BLUE_BOLD + "Exercise Start" + ANSI_RESET);
         /*
         EXERCISE:
         - Create arr1 with shape(3,5) initialize with random value
@@ -104,5 +105,16 @@ public class Ex4_GettingandSettingINDArrays {
         - Replace the previously selected value with ones
         */
 
+        INDArray arr1 = Nd4j.rand(3,5);
+        System.out.println(arr1);
+        System.out.println(arr1.getRow(1));
+        arr1.put(0,1,0);
+        System.out.println(arr1);
+        System.out.println(arr1.get(NDArrayIndex.point(2),NDArrayIndex.interval(1,4)));
+        arr1.put(
+                new INDArrayIndex[]{NDArrayIndex.point(2),NDArrayIndex.interval(1,4)},
+                Nd4j.ones(1,3)
+        );
+        System.out.println(arr1);
     }
 }

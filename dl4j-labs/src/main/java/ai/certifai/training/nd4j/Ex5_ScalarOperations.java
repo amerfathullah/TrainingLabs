@@ -52,12 +52,20 @@ public class Ex5_ScalarOperations {
         System.out.println(BLUE_BOLD + "myArray.add(randomArray)" + ANSI_RESET);
         System.out.println(addArraytoArray);
 
+        System.out.println(BLUE_BOLD + "\nExercise" + ANSI_RESET);
         /*
         EXERCISE:
         - Create arr1 with shape(3,3) initialize with random value
         - Multiply each of the element on the array with 2
-        - Subtract arr1 with arr2. (arr2 = shape(3,3) with value of ones)
+        - Subtract arr1 with arr2. (arr2 = sh
+        ape(3,3) with value of ones)
         */
 
+        INDArray arr1 = Nd4j.rand(3,3);
+        System.out.println(arr1);
+        arr1.muli(2);
+        System.out.println(arr1);
+        arr1.subi(Nd4j.rand(3,3));
+        System.out.println(arr1);
     }
 }

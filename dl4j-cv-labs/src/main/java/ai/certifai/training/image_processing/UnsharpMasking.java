@@ -17,6 +17,16 @@
 
 package ai.certifai.training.image_processing;
 
+import org.bytedeco.opencv.opencv_core.Mat;
+import org.bytedeco.opencv.opencv_core.Size;
+import org.nd4j.linalg.io.ClassPathResource;
+
+import java.io.IOException;
+
+import static org.bytedeco.opencv.global.opencv_core.add;
+import static org.bytedeco.opencv.global.opencv_core.subtract;
+import static org.bytedeco.opencv.global.opencv_imgcodecs.imread;
+import static org.bytedeco.opencv.global.opencv_imgproc.GaussianBlur;
 /*
 * TASKS:
 * -------
@@ -29,12 +39,26 @@ package ai.certifai.training.image_processing;
 *
 * */
 
+import static org.bytedeco.opencv.global.opencv_imgcodecs.imread;
+
 public class UnsharpMasking {
-    public static void main(String[] args){
-        /*
-         *
-         * ENTER YOUR CODE HERE
-         *
-         * */
+    public static void main(String[] args) throws IOException {
+
+        Mat src = imread(new ClassPathResource("image_processing/lena.png").getFile().getAbsolutePath());
+
+        Display.display(src, "Original");
+
+        Mat smoothed = new Mat();
+        Mat detail = new Mat();
+        Mat sharpened = new Mat();
+
+        GaussianBlur(src, smoothed, new Size(3,3), 2);
+
+        subtract(src, smoothed, detail);
+
+        add(src, detail, sharpened);
+
+        Display.display(detail, "Detail");
+        Display.display(sharpened, "Sharpened");
     }
 }

@@ -42,6 +42,7 @@ public class Ex9_BroadcastAndVectorOperations {
 
         //Subtract column vector
         INDArray columnVector = Nd4j.ones(3,1);
+        System.out.println(columnVector);
         INDArray subtractedColVector = myArray.subColumnVector(columnVector);
         System.out.println(BLACK_BOLD + "\nAdd row vector" + ANSI_RESET);
         System.out.println(BLUE_BOLD + "myArray.subColumnVector(columnVector)" + ANSI_RESET);

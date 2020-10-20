@@ -17,7 +17,14 @@
 
 package ai.certifai.training.image_processing;
 
+import org.bytedeco.opencv.opencv_core.Mat;
+import org.nd4j.linalg.io.ClassPathResource;
+import static org.bytedeco.opencv.global.opencv_imgproc.*;
+
 import java.io.IOException;
+
+import static org.bytedeco.opencv.global.opencv_imgcodecs.IMREAD_COLOR;
+import static org.bytedeco.opencv.global.opencv_imgcodecs.imread;
 
 /*
  * TASKS:
@@ -32,11 +39,15 @@ import java.io.IOException;
 public class Thresholding {
     public static void main(String[] args) throws IOException {
 
-        /*
-         *
-         * ENTER YOUR CODE HERE
-         *
-         * */
+        String imgPath = new ClassPathResource("image_processing/sat_map3.jpg").getFile().getAbsolutePath();
+        Mat src = imread(imgPath);
+
+        Display.display(src, "Original");
+
+        Mat dest = new Mat();
+        threshold(src, dest, 180, 255, THRESH_BINARY);
+
+        Display.display(dest, "After Thresholding");
 
     }
 }

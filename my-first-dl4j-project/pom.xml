@@ -106,7 +106,6 @@
       <!--
       Maven shade plugin configuration:
       To build uber jar (with all the dependencies)
-
       Example way of doing in command line:
       mvn clean package
       cd target

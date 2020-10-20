@@ -20,6 +20,7 @@ package ai.certifai.training.nd4j;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.BooleanIndexing;
+import org.nd4j.linalg.indexing.conditions.Condition;
 import org.nd4j.linalg.indexing.conditions.Conditions;
 
 public class Ex11_BooleanIndexing {
@@ -54,6 +55,7 @@ public class Ex11_BooleanIndexing {
         - Create arr1 with Nd4j.create(new float[]{1,1,1,2,2,2,3,3,3}, new int[]{3,3});
         - Set value that not equal to one to one
         */
-
+        INDArray arr1 = Nd4j.create(new float[]{1,1,1,2,2,2,3,3,3}, new int[]{3,3});
+        BooleanIndexing.replaceWhere(arr1, 1, Conditions.notEquals(1));
     }
 }
